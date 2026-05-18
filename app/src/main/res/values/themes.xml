@@ -1,4 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Daviplata" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Tema base para las Activities. Todo el theming visual se aplica en DaviPlataTheme (Compose). -->
+    <style name="Theme.DaviPlata" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:statusBarColor">@color/brand_red</item>
+        <item name="android:navigationBarColor">@color/white</item>
+    </style>
+
+    <!-- Tema "post-splash" para DaviPlataActivity. Lo aplica el sistema cuando el SplashScreen API desmonta el splash inicial. -->
+    <style name="Theme.DaviPlata.Splash" parent="Theme.DaviPlata">
+        <item name="android:windowBackground">@color/brand_red</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Tema raíz del DaviPlataActivity (manifest). En Android 12+ pinta el icono del app
+         sobre brand_red; en versiones anteriores cae al windowBackground heredado.
+         Cuando termina, el sistema cambia a postSplashScreenTheme. -->
+    <style name="Theme.DaviPlata.SystemSplash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brand_red</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.DaviPlata.Splash</item>
+    </style>
+
+    <!-- ReactActivity extiende AppCompatActivity y requiere un tema AppCompat.
+         Este tema se aplica solo a HomeReactActivity; el resto de pantallas usan Theme.DaviPlata. -->
+    <style name="Theme.DaviPlata.ReactNative" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/surface_light</item>
+        <item name="colorPrimary">@color/brand_red</item>
+        <item name="colorPrimaryDark">@color/brand_red_dark</item>
+        <item name="android:statusBarColor">@color/brand_red</item>
+        <item name="android:navigationBarColor">@color/white</item>
+    </style>
 </resources>

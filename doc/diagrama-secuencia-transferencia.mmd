@@ -1,0 +1,25 @@
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+sequenceDiagram
+  actor U as Usuario
+  participant H as Home (React Native)
+  participant T as Transferencias (Android)
+  participant B as Backend mock
+
+  U->>H: Tap "Transferir"
+  H->>T: Abre pantalla nativa
+  U->>T: Ingresa destinatario + monto
+  T->>B: Enviar transferencia
+
+  alt Transferencia exitosa
+    B-->>T: OK + nuevo saldo
+    T-->>U: "¡Transferencia exitosa!"
+    T->>H: Notifica nuevo saldo
+    H-->>U: Actualiza saldo
+  else Saldo insuficiente
+    B-->>T: Error
+    T-->>U: "Saldo insuficiente"
+  end

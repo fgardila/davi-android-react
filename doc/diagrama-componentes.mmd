@@ -1,0 +1,16 @@
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Usuario([Usuario])
+    Android[App Android<br/>Splash · Login · Transferencias]
+    RN[React Native<br/>Home · Movimientos]
+    Mock[(Backend mock)]
+    Sesion[(Sesión cifrada)]
+
+    Usuario --> Android
+    Android <-->|Bridge| RN
+    Android --> Mock
+    Android --> Sesion
