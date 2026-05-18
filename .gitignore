@@ -1,0 +1,45 @@
+# Android
+*.iml
+.gradle
+/local.properties
+/.idea
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Kotlin
+*.kotlin_module
+kotlin_js_store
+
+# React Native
+node_modules/
+.expo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.stylelintcache
+.flowbin
+
+# React Native Android
+app/build/
+*.apk
+*.aar
+*.jks
+*.keystore
+
+# Firebase
+# Descomenta la siguiente línea si no quieres subir tu configuración de Firebase
+# google-services.json
+
+# Bundle
+*.jsbundle
+
+# Metro
+.metro-cache/
+
+# General / OS
+.DS_Store
+Thumbs.db
