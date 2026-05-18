@@ -331,24 +331,75 @@ daviplata/
 
 ## Tests
 
-Suite unitaria de Kotlin (`./gradlew :app:testDebugUnitTest`):
+### Kotlin — 15 archivos, 127 casos (todos verdes)
 
-| Test | Cobertura |
-|---|---|
-| `ValidatorsTest` | 17 casos cubriendo todas las reglas de input |
-| `CreateTransferUseCaseTest` | Path feliz + validaciones (phone, amount) emitiendo `Failure(Validation)` |
-| `SessionGuardTest` | `isExpired`, `ensureValid` con session presente/ausente/vencida |
-| `MockInterceptorTest` | Login, lockout, paginación de movimientos, errores HTTP |
-| `ErrorMapperTest` | Tabla completa (HTTP code, server code) → `AppError` |
+`./gradlew :app:testDebugUnitTest`
 
-Cobertura crítica estimada: ~55% de la lógica de negocio. La capa `presentation/` (ViewModels y reducers) tiene cobertura ligera — un siguiente paso natural sería agregar tests de `LoginViewModel`/`RegisterViewModel`/`TransferViewModel` con `runTest` y fake UseCases.
+**Domain / validation**
 
-Lado JS (`cd rn-bundle && npx jest`):
+| Test | Casos | Cobertura |
+|---|---|---|
+| `ValidatorsTest` | 19 | Todas las reglas de input: teléfono (10 dígitos), password (longitud, mayúscula, dígito, confirmación), email, document, username, amount |
 
-| Test | Cobertura |
-|---|---|
-| `formatCurrency.test.ts` | Formateo COP |
-| `useBalance.test.tsx` | Hook con mock del bridge |
+**Domain / usecases**
+
+| Test | Casos | Cobertura |
+|---|---|---|
+| `LoginUseCaseTest` | 5 | Path feliz + persistencia de sesión, `Failure` no guarda, pre-validación phone/password short-circuit, mensaje proveniente de `Validators` |
+| `RegisterUseCaseTest` | 10 | Path feliz + pre-validaciones (phone, name vacío, document corto, email sin `@`, username con espacio, password sin mayúscula / sin dígito, mismatch) y propagación de `Failure` |
+| `CreateTransferUseCaseTest` | 5 | Path feliz + validaciones (phone destinatario, amount > 0) emitiendo `Failure(Validation)` |
+| `FindRecipientUseCaseTest` | 3 | Path feliz, 404 → `Success(null)`, pre-validación phone < 10 dígitos no llega al repo |
+
+**Data / red y persistencia**
+
+| Test | Casos | Cobertura |
+|---|---|---|
+| `MockInterceptorTest` | 4 | Login OK, lockout tras 3 intentos (`423 ACCOUNT_LOCKED`), paginación de movimientos, errores HTTP forzados |
+| `ErrorMapperTest` | 18 | Tabla completa `(HTTP code, server code) → AppError` (InvalidCredentials, AccountLocked, SessionExpired, InsufficientFunds, RecipientNotFound, NetworkError, Unknown, …) |
+| `ApiFlowTest` | 4 | `apiFlow` helper: `Loading → Success`, `IOException → NetworkError`, `IllegalArgument → Validation`, `Throwable → Unknown` |
+| `TransferRepositoryImplTest` | 5 | Mapeo DTO → domain, propagación de `InsufficientFunds`, `findRecipient` con 404 → `Success(null)` sin tragarse otros errores |
+| `SessionRepositoryImplTest` | 8 | `current()` desde storage, `save()`/`clear()` atómicos sobre storage + cache in-memory, `isValid()` (ausente/vencida/válida), `sessionFlow` emite valor inicial |
+
+**Presentation / ViewModels** (cubierto con `runTest` + fake UseCases — antes era el hueco principal)
+
+| Test | Casos | Cobertura |
+|---|---|---|
+| `LoginViewModelTest` | 9 | `Idle → Loading → Success`, `InvalidCredentials` con `attempts` (incluyendo default cuando viene null), `AccountLocked` con `retryAfterSeconds`, `Validation`, `Unknown`, login concurrente ignorado durante `Loading`, `resetState` |
+| `RegisterViewModelTest` | 13 | Strength meter (Weak/Fair/Good/Strong por combinación longitud + upper + digit + symbol), path feliz, `Loading` visible, `PhoneTaken`, `Validation`, `Unknown`, `resetState` |
+| `TransferViewModelTest` | 13 | Carga inicial de saldo (con `Failure` que limpia loading sin crashear), lookup (< 10 dígitos, self-transfer sin pegarle al repo, found, not-found, network error), submit (success actualizando balance, `InsufficientFunds`, `RecipientNotFound`, `Validation`), `resetSubmitState` |
+
+**Security**
+
+| Test | Casos | Cobertura |
+|---|---|---|
+| `SessionGuardTest` | 6 | `isExpired` / `ensureValid` con session ausente, válida y vencida |
+| `PasswordHasherTest` | 5 | BCrypt: `verify` acepta original, rechaza distinto, salt único (mismo password → hashes distintos), formato BCrypt válido, rechaza vacío |
+
+### JavaScript — 6 archivos, 36 casos (todos verdes)
+
+`cd rn-bundle && npx jest`
+
+| Test | Casos | Cobertura |
+|---|---|---|
+| `formatCurrency.test.ts` | 9 | Formateo COP (enteros, decimales bajo demanda, cero), prefijo `+/-` para crédito/débito, fechas relativas (`Hoy`, `Ayer`, fecha formateada) |
+| `MovementItem.test.tsx` | 9 | Render de descripción/monto, flechas CREDIT (↓) / DEBIT (↑), badges condicionales (none para `COMPLETED`, "Pendiente" para `PENDING`, "Fallido" para `FAILED`), strikethrough solo en `FAILED`, fecha relativa |
+| `nativeApi.test.ts` | 7 | Wrapper tipado sobre `NativeModules`: `getBalance`, `getMovements` (forward de page/size + default size), `openTransfer` (con payload y default vacío), `logout`, `forceSessionExpired` |
+| `events.test.ts` | 4 | `DeviceEventEmitter`: subscripción dispara handler, unsubscribe desconecta, listeners independientes coexisten, filtrado por nombre de evento |
+| `useBalance.test.tsx` | 3 | Hook + React Query: `pending → resolved`, estado de error si `getBalance` rechaza, single fetch por mount |
+| `useMovementsQuery.test.tsx` | 4 | `pending → resolved` con items, `getMovements(0, size)`, error state, lista vacía |
+
+### Cómo correrlos
+
+```bash
+# Kotlin (todos)
+./gradlew :app:testDebugUnitTest
+
+# Kotlin (uno específico)
+./gradlew :app:testDebugUnitTest --tests "dev.code93.daviplata.presentation.transfer.TransferViewModelTest"
+
+# JS (todos, con detalle)
+cd rn-bundle && npx jest --verbose
+```
 
 ---
 
